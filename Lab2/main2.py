@@ -1,4 +1,3 @@
-
 import math
 import matplotlib
 import numpy as np
@@ -15,12 +14,12 @@ x0 = 5  # положение кольца в начальный момент в�
 R = 3  # радиус кольца
 
 s = [0.9 * R * np.cos(((x**2) / -x*3) - x*0.5) for x in t]  # отклонение груза
-phi = [1 + 0.5 * np.cos(4 * x + pi) for x in t]  # угол поворота кольцы
+phi = [1 + 0.5 * np.cos(4*x + pi) for x in t]  # угол поворота кольцы
 
-angles = np.linspace(0, 2 * pi, 360)
+angles = np.linspace(0, 2*pi, 360)
 
-box_w = 0.4  # ширина груза
-box_h = 0.2  # высота груза
+box_w = 0.65  # ширина груза
+box_h = 0.5  # высота груза
 
 # генерирует пружинку высотой h с количеством витков k и шириной w
 def spring(k, h, w):
@@ -31,20 +30,20 @@ def spring(k, h, w):
 ring_dots_x_tmp = R * np.cos(angles)
 ring_dots_y_tmp = R * np.sin(angles)
 
-box_x_tmp = np.array([-box_h / 2, -box_h / 2, box_h / 2, box_h / 2, -box_h / 2])
-box_y_tmp = np.array([-box_w / 2, box_w / 2, box_w / 2, -box_w / 2, -box_w / 2])
+box_x_tmp = np.array([-box_h / 2, -box_h / 2, box_h / 2, box_h / 2, -box_h / 2, box_h / 2, -box_h / 2, box_h / 2])
+box_y_tmp = np.array([-box_w / 2, box_w / 2, box_w / 2, -box_w / 2, -box_w / 2, box_w / 2, box_w / 2, -box_w / 2])
 
-line1_x_tmp = np.array([-1.4836*R/1.50, -1.4836*R/1.50, 1.4836*R/1.50, 1.4836*R/1.50])
-line1_y_tmp = np.array([1, 1, 1, 1])
+line1_x_tmp = np.array([-1.1836*R/1.50, -1.4836*R/1.50, 1.4836*R/1.50, 1.4836*R/1.50])
+line1_y_tmp = np.array([1.2, 1.2, 1.2, 1.2])
 
 line2_x_tmp = np.array([-1.4836*R/1.50, -1.4836*R/1.50, 1.4836*R/1.50, 1.4836*R/1.50])
-line2_y_tmp = np.array([1, 1, 1, 1])
+line2_y_tmp = np.array([0.8, 0.8, 0.8, 0.8])
 
 ring_dots_x = np.zeros([len(t), len(angles)])
 ring_dots_y = np.zeros([len(t), len(angles)])
 
-box_dots_x = np.zeros([len(t), 5])
-box_dots_y = np.zeros([len(t), 5])
+box_dots_x = np.zeros([len(t), 8])
+box_dots_y = np.zeros([len(t), 8])
 
 line1_dots_x = np.zeros([len(t), 4])
 line1_dots_y = np.zeros([len(t), 4])
@@ -115,6 +114,7 @@ line2, = ax.plot(line2_dots_x[0], line2_dots_y[0], "black")  # стенка 2
 surface = ax.plot([0, 0, 10], [10, 0, 0], "black")  # пол и стена
 ring, = ax.plot(ring_dots_x[0], ring_dots_y[0], "black")  # кольцо
 box, = ax.plot(box_dots_x[0], box_dots_y[0], "black")  # груз
+
 spring_a, = ax.plot(spring_a_x[0], spring_a_y[0], "red")  # горизонтальная пружина
 spring_b, = ax.plot(spring_b_x[0], spring_b_y[0], "purple")  # нижняя пружина
 spring_c, = ax.plot(spring_c_x[0], spring_c_y[0], "brown")  # верхняя пружина
@@ -128,7 +128,6 @@ def animate(i):
     spring_a.set_data(spring_a_x[i], spring_a_y[i])
     spring_b.set_data(spring_b_x[i], spring_b_y[i])
     spring_c.set_data(spring_c_x[i], spring_c_y[i])
-
     return ring, box, spring_a, spring_b, spring_c, line1, line2
 
 animation = FuncAnimation(fig, animate, frames=315, interval=60)
