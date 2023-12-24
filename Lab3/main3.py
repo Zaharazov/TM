@@ -40,7 +40,7 @@ c1 = 5  # коэффециент упругости горизонтальной
 
 g = 9.81  # ускорение свободного падения
 
-phi0 = math.pi/2  # поворот кольца в начальный момент времени
+phi0 = pi/2  # поворот кольца в начальный момент времени
 dphi0 = 1  # угловая скорость кольца в начальный момент времени
 
 s0 = 0  # отклонение груза в начальный момент времени
@@ -51,17 +51,12 @@ Y = odeint(fnc, y0, t, (m1, m2, c, c1, R, g))
 
 s = Y[:, 0]  # отклонение груза
 
+# стабилизация пружин внутри кольца
 for i in range(len(s)):
     if (s[i] < 0):
-        tmp = s[i]
         s[i] = max(s[i], -R + R/10)
-        if (abs(tmp) > R):
-            s[i] -= (abs(tmp) - R) / 10
     else:
-        tmp = s[i]
         s[i] = min(s[i], R - R/10)
-        if (abs(tmp) > R):
-            s[i] += (abs(tmp) - R) / 10
 
 ds = Y[:, 2]  # скорость отклонения груза
 dds = [fnc(y, time, m1, m2, c, c1, R, g)[2] for y, time in zip(Y, t)]  # ускорение отклонения груза
@@ -70,7 +65,7 @@ phi = Y[:, 1]  # угол поворота кольцы
 dphi = Y[:, 3]  # угловая скорость кольца
 ddphi = [fnc(y, time, m1, m2, c, c1, R, g)[3] for y, time in zip(Y, t)]  # угловое ускорение колца
 
-angles = np.linspace(0, 2 * pi, 360) #!!!
+angles = np.linspace(0, 2 * pi, 360)
 
 box_w = 0.4  # ширина груза
 box_h = 0.2  # высота груза
@@ -82,8 +77,11 @@ def spring(k, h, w):
 
 # массивы, где будем хранить просчитанные точки
 
-box_x_tmp = np.array([-box_h / 2, -box_h / 2, box_h / 2, box_h / 2, -box_h / 2])
-box_y_tmp = np.array([-box_w / 2, box_w / 2, box_w / 2, -box_w / 2, -box_w / 2])
+box_x_tmp = np.array([-box_h / 2, -box_h / 2, box_h / 2, box_h / 2, -box_h / 2, box_h / 2, -box_h / 2, box_h / 2])
+box_y_tmp = np.array([-box_w / 2, box_w / 2, box_w / 2, -box_w / 2, -box_w / 2, box_w / 2, box_w / 2, -box_w / 2])
+
+F_friction = np.zeros(len(t))
+N = np.zeros(len(t))
 
 line1_x_tmp = np.array([-1.4836*R/1.54, -1.4836*R/1.54, 1.4836*R/1.54, 1.4836*R/1.54])
 line1_y_tmp = np.array([1, 1, 1, 1])
@@ -94,8 +92,8 @@ line2_y_tmp = np.array([1, 1, 1, 1])
 ring_dots_x = np.zeros([len(t), len(angles)])
 ring_dots_y = np.zeros([len(t), len(angles)])
 
-box_dots_x = np.zeros([len(t), 5])
-box_dots_y = np.zeros([len(t), 5])
+box_dots_x = np.zeros([len(t), 8])
+box_dots_y = np.zeros([len(t), 8])
 
 line1_dots_x = np.zeros([len(t), 4])
 line1_dots_y = np.zeros([len(t), 4])
@@ -112,8 +110,14 @@ spring_b_y = np.zeros([len(t), 100])
 spring_c_x = np.zeros([len(t), 100])
 spring_c_y = np.zeros([len(t), 100])
 
-# считаем точки
+# считаем точки и силы
 for i in range(len(t)):
+    # сила трения
+    F_friction[i] = (m1 + m2) * R * ddphi[i] - m2 * (dds[i] - s[i] * dphi[i]**2) * np.cos(phi[i]) + m2*(2*ds[i]*dphi[i] + s[i]*ddphi[i]) * np.sin(phi[i]) + c1*R*phi[i]
+
+    # сила давления
+    N[i] = m2*((dds[i] - s[i]*(dphi[i]**2))*np.sin(phi[i])+(2*ds[i]*dphi[i] + s[i]*ddphi[i])*np.cos(phi[i])) + (m1+m2)*g
+
     # центр кольца
     ring_x = x0 + phi[i] * R
     ring_y = R
@@ -145,60 +149,47 @@ for i in range(len(t)):
     spring_a_y[i] = spring(5, ring_x, 0.2)[1] + ring_y
 
     # верхняя пружина в кольце
-    b_x = R - spring(10, R + s[i] - box_h / 2, 0.2)[0]  # s[i] - сжатие пружины
-    b_y = spring(10, R - s[i], 0.2)[1]
+    b_x = R - spring(10, R + s[i] - box_h / 2, 0.16)[0]  # s[i] - сжатие пружины
+    b_y = spring(10, R - s[i], 0.16)[1]
     spring_b_x[i] = np.cos(phi[i]) * b_x + np.sin(phi[i]) * b_y + ring_x
     spring_b_y[i] = -np.sin(phi[i]) * b_x + np.cos(phi[i]) * b_y + ring_y
 
     # нижняя пружина в кольце
-    c_x = spring(10, R - s[i] - box_h / 2, 0.2)[0] - R
-    c_y = spring(10, R - s[i], 0.2)[1]
+    c_x = spring(10, R - s[i] - box_h / 2, 0.16)[0] - R
+    c_y = spring(10, R - s[i], 0.16)[1]
     spring_c_x[i] = np.cos(phi[i]) * c_x + np.sin(phi[i]) * c_y + ring_x
     spring_c_y[i] = -np.sin(phi[i]) * c_x + np.cos(phi[i]) * c_y + ring_y
 
 fig_for_graphs = plt.figure(figsize=[13, 7])
 
+# график силы трения
+ax_for_graphs = fig_for_graphs.add_subplot(2, 2, 1)
+ax_for_graphs.plot(t, F_friction, color='black')
+ax_for_graphs.set_title("F(t)")
+ax_for_graphs.set(xlim=[0, t_fin])
+ax_for_graphs.grid(True)
+
+# график силы давления
+ax_for_graphs = fig_for_graphs.add_subplot(2, 2, 2)
+ax_for_graphs.plot(t, N, color='black')
+ax_for_graphs.set_title("N(t)")
+ax_for_graphs.set(xlim=[0, t_fin])
+ax_for_graphs.grid(True)
+
 # график отклонения груза
-ax_for_graphs = fig_for_graphs.add_subplot(2, 3, 1)
+ax_for_graphs = fig_for_graphs.add_subplot(2, 2, 3)
 ax_for_graphs.plot(t, s, color='blue')
 ax_for_graphs.set_title("s(t)")
 ax_for_graphs.set(xlim=[0, t_fin])
 ax_for_graphs.grid(True)
 
-# график скорости отклонения груза
-ax_for_graphs = fig_for_graphs.add_subplot(2, 3, 2)
-ax_for_graphs.plot(t, ds, color='blue')
-ax_for_graphs.set_title("s'(t)")
-ax_for_graphs.set(xlim=[0, t_fin])
-ax_for_graphs.grid(True)
-
-# график ускорения отклонения груза
-ax_for_graphs = fig_for_graphs.add_subplot(2, 3, 3)
-ax_for_graphs.plot(t, dds, color='blue')
-ax_for_graphs.set_title("s''(t)")
-ax_for_graphs.set(xlim=[0, t_fin])
-ax_for_graphs.grid(True)
-
 # график угла поворота кольца
-ax_for_graphs = fig_for_graphs.add_subplot(2, 3, 4)
+ax_for_graphs = fig_for_graphs.add_subplot(2, 2, 4)
 ax_for_graphs.plot(t, phi, color='red')
 ax_for_graphs.set_title('phi(t)')
 ax_for_graphs.set(xlim=[0, t_fin])
 ax_for_graphs.grid(True)
 
-# график угловой скорости кольца
-ax_for_graphs = fig_for_graphs.add_subplot(2, 3, 5)
-ax_for_graphs.plot(t, dphi, color='red')
-ax_for_graphs.set_title("phi'(t)")
-ax_for_graphs.set(xlim=[0, t_fin])
-ax_for_graphs.grid(True)
-
-# график углового ускорения кольца
-ax_for_graphs = fig_for_graphs.add_subplot(2, 3, 6)
-ax_for_graphs.plot(t, ddphi, color='red')
-ax_for_graphs.set_title("phi''(t)")
-ax_for_graphs.set(xlim=[0, t_fin])
-ax_for_graphs.grid(True)
 
 # рисуем график
 fig = plt.figure()  # создаем холст, на котором будем рисовать фигуры
@@ -228,3 +219,4 @@ def animate(i):
 
 animation = FuncAnimation(fig, animate, frames=1000, interval=60)
 plt.show()
+
