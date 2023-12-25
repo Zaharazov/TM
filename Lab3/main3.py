@@ -7,17 +7,17 @@ from scipy.integrate import odeint
 import math
 
 def fnc(y, t, m1, m2, c, c1, R, g):
-    dy = np.zeros(4)
+    dy = np.zeros(4)  # массив нулей
     dy[0] = y[2]
     dy[1] = y[3]
 
-    a11 = -m2 * R * np.cos(y[1])
-    a12 = ((2 * m1 + m2) * R ** 2 + m2 * y[0]**2 + 2 * R * m2 * y[0] * np.sin(y[1]))
-    a21 = 1
-    a22 = -R * np.cos(y[1])
+    a11 = -m2 * R * np.cos(y[1])  # коэфф. при dds (1)
+    a12 = ((2 * m1 + m2) * R ** 2 + m2 * y[0]**2 + 2 * R * m2 * y[0] * np.sin(y[1]))  # коэфф. при ddphi (1)
+    a21 = 1  # коэфф. при dds (2)
+    a22 = -R * np.cos(y[1])  # коэфф. при ddphi (2)
 
     b1 = m2 * R * y[0] * y[3] ** 2 * np.cos(y[1]) - 2 * m2 * (y[0] + R * np.sin(y[1])) * y[2] * y[3] - c1 * R ** 2 * y[1] - m2 * g * y[0] * np.cos(y[1])
-    b2 = y[0] * y[3] ** 2 - 2 * (c / m2) * y[0] - g * np.sin(y[1])
+    b2 = y[0] * y[3] ** 2 - 2 * (c / m2) * y[0] - g * np.sin(y[1])  # оставшиеся коэфф.
 
     dy[2] = (b1 * a22 - b2 * a12) / (a11 * a22 - a12 * a21)
     dy[3] = (b2 * a11 - b1 * a21) / (a11 * a22 - a12 * a21)
@@ -26,28 +26,22 @@ def fnc(y, t, m1, m2, c, c1, R, g):
 
 # константы
 t_fin = 20
-t = np.linspace(0, t_fin, 1001)
+t = np.linspace(0, t_fin, 1001)  # последовательность точек
 
-x0 = 4  # положение кольца в начальный момент времени
-
+x0 = 6  # положение кольца в начальный момент времени
 m1 = 1  # масса кольца
 R = 1  # радиус кольца
-
 m2 = 0.5  # масса бруска
-
 c = 5  # коэффециент упругости пружин в кольце
-c1 = 5  # коэффециент упругости горизонтальной пружины
-
+c1 = 2  # коэффециент упругости горизонтальной пружины
 g = 9.81  # ускорение свободного падения
-
 phi0 = pi/2  # поворот кольца в начальный момент времени
 dphi0 = 1  # угловая скорость кольца в начальный момент времени
-
 s0 = 0  # отклонение груза в начальный момент времени
 ds0 = 0  # скорость отклонения груза в начальный момент времени
 
 y0 = [s0, phi0, ds0, dphi0]
-Y = odeint(fnc, y0, t, (m1, m2, c, c1, R, g))
+Y = odeint(fnc, y0, t, (m1, m2, c, c1, R, g))  # считаем дифф. уравнения
 
 s = Y[:, 0]  # отклонение груза
 
@@ -77,13 +71,13 @@ def spring(k, h, w):
 
 # массивы, где будем хранить просчитанные точки
 
-box_x_tmp = np.array([-box_h / 2, -box_h / 2, box_h / 2, box_h / 2, -box_h / 2, box_h / 2, -box_h / 2, box_h / 2])
-box_y_tmp = np.array([-box_w / 2, box_w / 2, box_w / 2, -box_w / 2, -box_w / 2, box_w / 2, box_w / 2, -box_w / 2])
+box_x_tmp = np.array([-box_h / 2, -box_h / 2, box_h / 2, box_h / 2, -box_h / 2, box_h / 2, -box_h / 2, box_h / 2])  # точки грузика по x
+box_y_tmp = np.array([-box_w / 2, box_w / 2, box_w / 2, -box_w / 2, -box_w / 2, box_w / 2, box_w / 2, -box_w / 2])  # точки грузика по y
 
-F_friction = np.zeros(len(t))
+F_friction = np.zeros(len(t))  # силы трения и давления
 N = np.zeros(len(t))
 
-line1_x_tmp = np.array([-1.4836*R/1.54, -1.4836*R/1.54, 1.4836*R/1.54, 1.4836*R/1.54])
+line1_x_tmp = np.array([-1.4836*R/1.54, -1.4836*R/1.54, 1.4836*R/1.54, 1.4836*R/1.54])  # точки линий для пружинки
 line1_y_tmp = np.array([1, 1, 1, 1])
 
 line2_x_tmp = np.array([-1.4836*R/1.54, -1.4836*R/1.54, 1.4836*R/1.54, 1.4836*R/1.54])
@@ -190,7 +184,6 @@ ax_for_graphs.set_title('phi(t)')
 ax_for_graphs.set(xlim=[0, t_fin])
 ax_for_graphs.grid(True)
 
-
 # рисуем график
 fig = plt.figure()  # создаем холст, на котором будем рисовать фигуры
 ax = fig.add_subplot(1, 1, 1)
@@ -198,7 +191,7 @@ ax.axis("equal")
 
 line1, = ax.plot(line1_dots_x[0], line1_dots_y[0], "black")  # стенка 1
 line2, = ax.plot(line2_dots_x[0], line2_dots_y[0], "black")  # стенка 2
-surface = ax.plot([0, 0, 8], [5, 0, 0], "black")  # пол и стена
+surface = ax.plot([0, 0, 12], [5, 0, 0], "black")  # пол и стена
 ring, = ax.plot(ring_dots_x[0], ring_dots_y[0], "black")  # кольцо
 box, = ax.plot(box_dots_x[0], box_dots_y[0], "black")  # груз
 spring_a, = ax.plot(spring_a_x[0], spring_a_y[0], "red")  # горизонтальная пружина
@@ -217,6 +210,6 @@ def animate(i):
 
     return ring, box, spring_a, spring_b, spring_c, line1, line2
 
-animation = FuncAnimation(fig, animate, frames=1000, interval=60)
+animation = FuncAnimation(fig, animate, frames=len(t), interval=60)
 plt.show()
 
